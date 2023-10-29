@@ -143,10 +143,16 @@ def probabilistic_selection(population, fitness_values, num_parents):
     total_fitness = sum(fitness_values)
 
     # Calculate the probability of selecting each chromosome
-    probabilities = [f / total_fitness for f in fitness_values]
+    probabilities = [total_fitness / f for f in fitness_values]
+
+    # Scale the probabilities to be between 0 and 1
+    max_probability = max(probabilities)
+    scaled_probabilities = [prob / max_probability for prob in probabilities]
+    # Adjust the scaled probabilities to sum to 1
+    scaled_probabilities = [prob / sum(scaled_probabilities) for prob in scaled_probabilities]
 
     # Select parents using roulette wheel selection with inverted probabilities
-    selected_indices = np.random.choice(len(population), size=num_parents, p=probabilities)
+    selected_indices = np.random.choice(len(population), size=num_parents, p=scaled_probabilities)
     selected_parents = [population[i] for i in selected_indices]
     selected_fitness = [fitness_values[i] for i in selected_indices]
     selected_fitness= [-item for item in selected_fitness]
