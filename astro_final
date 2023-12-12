@@ -3,6 +3,21 @@ import requests
 import json
 import time
 import pandas as pd
+import numpy as np
+from scipy.spatial.transform import Rotation
+
+# Function to convert RA, DEC, NCP to quaternion
+def ra_dec_ncp_to_quaternion(ra, dec, ncp):
+    try:
+        ra_rad = np.deg2rad(ra)
+        dec_rad = np.deg2rad(-dec)
+        ncp_rad = np.deg2rad(ncp)
+
+        r = Rotation.from_euler('ZYX', [ra_rad, dec_rad, ncp_rad])
+        q = r.as_quat()
+        return q
+    except:
+        return [np.nan, np.nan, np.nan, np.nan]  # Return empty quaternion if computation fails
 
 def submit_and_process_image(image_path, session_key, successful_calibrations):
     try:
@@ -76,6 +91,12 @@ def submit_and_process_image(image_path, session_key, successful_calibrations):
 
         # Check if calibration is successful
         if 'parity' in calibration_results:
+            quaternion = ra_dec_ncp_to_quaternion(
+                calibration_results['ra'],
+                calibration_results['dec'],
+                calibration_results['orientation']
+            )
+
             successful_calibrations.append({
                 'image_path': image_path,
                 'parity': calibration_results['parity'],
@@ -83,7 +104,8 @@ def submit_and_process_image(image_path, session_key, successful_calibrations):
                 'pixscale': calibration_results['pixscale'],
                 'radius': calibration_results['radius'],
                 'ra': calibration_results['ra'],
-                'dec': calibration_results['dec']
+                'dec': calibration_results['dec'],
+                'quaternion': quaternion
             })
 
     except requests.exceptions.HTTPError as errh:
@@ -93,6 +115,7 @@ def submit_and_process_image(image_path, session_key, successful_calibrations):
     except Exception as e:
         print(f"Error: {e}")
         print(f"Upload failed for image: {image_path}. Response: {upload_response.text}")
+
 
 # Step 1: Log in and get the session key
 api_key = "API-KEY"
@@ -108,7 +131,7 @@ if not session_key:
     exit()
 
 # Step 2: Set the folder path containing images
-folder_path = 'IMG_FOLDER_PATH'
+folder_path = 'IMG-FOLDER-PATH'
 upload_url = 'http://nova.astrometry.net/api/upload'
 
 # List to store successful calibration results
@@ -121,12 +144,12 @@ for filename in os.listdir(folder_path):
         print(f"\nProcessing image: {image_path}")
         submit_and_process_image(image_path, session_key, successful_calibrations)
 
+
 # Step 4: Create a DataFrame and save to Excel if there are successful calibrations
 if successful_calibrations:
     df = pd.DataFrame(successful_calibrations)
-    excel_filename = 'RESULT_FILE_PATH_XLXS'
+    excel_filename = 'RESULT-EXCEL-FILE'
     df.to_excel(excel_filename, index=False)
     print(f"Calibration results saved to {excel_filename}")
 else:
     print("No successful calibrations to save.")
-
