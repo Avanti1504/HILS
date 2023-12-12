@@ -13,12 +13,7 @@ def submit_and_process_image(image_path, session_key, successful_calibrations):
                     'allow_commercial_use': 'n',
                     'allow_modifications': 'n',
                     'publicly_visible': 'n',
-                    'scale_units': 'degwidth',
-                    'scale_lower': 0.5,
-                    'scale_upper': 1.0,
-                    'center_ra': 290,
-                    'center_dec': 11,
-                    'radius': 2.0
+                   
                 }), 'application/json'),
                 'file': ('image.jpg', file, 'application/octet-stream')
             }
@@ -100,7 +95,7 @@ def submit_and_process_image(image_path, session_key, successful_calibrations):
         print(f"Upload failed for image: {image_path}. Response: {upload_response.text}")
 
 # Step 1: Log in and get the session key
-api_key = "ogexwstpsjsxyzkt"
+api_key = "API-KEY"
 login_url = 'http://nova.astrometry.net/api/login'
 login_payload = {'request-json': json.dumps({"apikey": api_key})}
 login_response = requests.post(login_url, data=login_payload)
@@ -113,7 +108,7 @@ if not session_key:
     exit()
 
 # Step 2: Set the folder path containing images
-folder_path = '/mnt/d/Avanti/SSP/test_images'
+folder_path = 'IMG_FOLDER_PATH'
 upload_url = 'http://nova.astrometry.net/api/upload'
 
 # List to store successful calibration results
@@ -129,8 +124,9 @@ for filename in os.listdir(folder_path):
 # Step 4: Create a DataFrame and save to Excel if there are successful calibrations
 if successful_calibrations:
     df = pd.DataFrame(successful_calibrations)
-    excel_filename = 'calibration_results.xlsx'
+    excel_filename = 'RESULT_FILE_PATH_XLXS'
     df.to_excel(excel_filename, index=False)
     print(f"Calibration results saved to {excel_filename}")
 else:
     print("No successful calibrations to save.")
+
